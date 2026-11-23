@@ -1,0 +1,3 @@
+{
+ "_rule": "Optional. \"<episode>/<id>\": [\"#tag\", ...], 3 to 5 topic tags per Short. Used only when the description json has no \"hashtags\"."
+}
