@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=1080, height=960"/>
+<title>Year tape</title>
+<script src="gsap.min.js"></script><link rel="stylesheet" href="brand.css"/><link rel="stylesheet" href="kit.css"/>
+<style>
+html, body, #root { width: 1080px; height: 960px; }
+#hero { position: absolute; inset: 0; }
+#odo { left: 0; right: 0; top: 70px; height: 270px; display: flex; justify-content: center; gap: 4px; }
+.col { position: relative; width: 190px; height: 270px; overflow: hidden; }
+.col .strip { position: absolute; left: 0; top: 0; width: 100%; }
+.col .strip div { height: 270px; line-height: 290px; text-align: center; font-size: 290px; color: var(--on-paper); }
+#odo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, var(--paper) 0%, transparent 16%, transparent 84%, var(--paper) 100%); pointer-events: none; }
+#tapeWrap { left: -20px; right: -20px; top: 470px; height: 190px; overflow: hidden; background: var(--paper); box-shadow: var(--cast); }
+#tape { position: absolute; left: 0; top: 0; height: 190px; }
+.tk { position: absolute; top: 0; width: 6px; margin-left: -3px; border-radius: 0 0 3px 3px; background: var(--on-paper); }
+.yr { position: absolute; top: 112px; width: 160px; margin-left: -80px; text-align: center; font-size: 34px; color: color-mix(in srgb, var(--on-paper) 55%, transparent); }
+#ph { left: 517px; top: 400px; width: 46px; height: 300px; }
+#fcard { left: 150px; top: 716px; width: 140px; height: 140px; border-radius: 36px; display: flex; align-items: center; justify-content: center; }
+#fcard img { width: 92px; height: 92px; }
+#lab { left: 330px; top: 738px; font-size: 116px; text-transform: uppercase; }
+</style></head><body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="4.6" data-fps="30" data-width="1080" data-height="960">
+  <div id="hero">
+    <div id="odo" class="abs"></div>
+    <div id="tapeWrap" class="abs"><div id="tape"></div></div>
+    <div id="fcard" class="card"><img id="flogo" src="logos/sample-a.svg" alt="Sample"/></div>
+    <svg id="ph" class="abs" viewBox="0 0 46 300"><path d="M23 40 V286" stroke="var(--accent-deep)" stroke-width="8" stroke-linecap="round"/><path d="M4 4 H42 L23 36 Z" fill="var(--accent-deep)" stroke="var(--accent-deep)" stroke-width="6" stroke-linejoin="round"/></svg>
+    <div id="lab" class="abs disp">Launch</div>
+  </div>
+</div>
+<script src="kit.js"></script>
+<script>
+(function () {
+/* INPUTS: from year, stops [{year, t}], the landing logo (svg), label (1 word). */
+const IN = { from: 2026, mid: 2028, to: 2048 };
+const C = K.C, root = document.getElementById('root'); K.ground(root, { seed: 51 });
+const tl = K.timeline(4.6); window.__timelines['main'] = tl;
+const $ = id => document.getElementById(id), PX = 96;
+// tape ticks: every year, long + label every 5
+const tape = $('tape'), Y0 = IN.from - 12;
+for (let y = Y0; y <= IN.to + 12; y++) { const x = (y - Y0) * PX, big = y % 5 === 0;
+  K.el(tape, 'tk', { left: x + 'px', height: (big ? 92 : 48) + 'px', opacity: big ? 1 : .55 });
+  if (big) K.el(tape, 'abs mono yr', { left: x + 'px' }, String(y)); }
+const mark = y => K.el(tape, 'abs', { left: ((y - Y0) * PX - 14) + 'px', top: '140px', width: '28px', height: '28px', borderRadius: '50%', background: C.deep, opacity: 0 });
+const m1 = mark(IN.mid), m2 = mark(IN.to);
+// odometer: 4 columns, carries roll like a real counter
+const odo = $('odo'), cols = [3, 2, 1, 0].map(p => { const c = K.el(odo, 'col'); const s = K.el(c, 'strip');
+  s.innerHTML = '0123456789'.split('').concat(['0']).map(d => `<div class="disp">${d}</div>`).join(''); return { p, s }; });
+const S = { y: IN.from };
+function render() {
+  const Y = S.y;
+  cols.forEach(({ p, s }) => { const m = Math.pow(10, p), d = Math.floor(Y / m) % 10, rem = Y % m;
+    const off = p === 0 ? Y % 1 : Math.max(0, Math.min(1, rem - (m - 1)));
+    s.style.transform = `translateY(${(-(d + off) * 270).toFixed(1)}px)`; });
+  tape.style.transform = `translateX(${(540 + 20 - (Y - Y0) * PX).toFixed(1)}px)`;
+}
+render();
+let last = S.y, lastT = 0;
+const go = (to, t, dur, ease) => tl.to(S, { y: to, duration: dur, ease, onUpdate: render }, t);
+// speed blur on the tape: pure function of the same eased curves
+const segs = [[0.85, .5, IN.from, IN.mid, 'power3.inOut'], [1.7, 1.35, IN.mid, IN.to, 'expo.inOut']].map(s => (s.push(gsap.parseEase(s[4])), s));
+const yAt = t => { let y = IN.from; segs.forEach(([t0, d, a, b, , e]) => { if (t >= t0) y = a + (b - a) * e(Math.min(1, (t - t0) / d)); }); return y; };
+K.every(t => { const v = Math.abs(yAt(t + 1 / 60) - yAt(t)) * 60 * PX; tape.style.filter = v > 300 ? `blur(${Math.min(8, v / 900).toFixed(1)}px)` : 'none'; }, 0, 4.6);
+segs.forEach(([t0, d, a, b, e]) => go(b, t0, d, e));
+// build
+K.land($('tapeWrap'), 0, { scale: 1, y: 60 }, .5, 'power3.out');
+K.land($('ph'), .2, { scale: .7, y: -40 }, .45, 'back.out(2)');
+tl.fromTo(odo, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: .45, ease: 'power3.out' }, .1);
+tl.to(m1, { opacity: 1, duration: .15 }, 1.35); K.kick($('ph'), 1.35, .08);
+tl.to(m2, { opacity: 1, duration: .15 }, 3.0);
+// the landing: flag springs out of the tape with the real logo, label lands, pulse
+K.land($('fcard'), 3.05, { scale: .6, y: 30, rotation: -20 }, .5, 'back.out(2.2)');
+tl.to('#flogo', { rotation: 90, duration: .9, ease: 'power2.inOut' }, 3.4);
+tl.fromTo($('lab'), { opacity: 0, x: -40 }, { opacity: 1, x: 0, duration: .45, ease: 'power3.out' }, 3.2);
+K.pulse($('hero'), 540, 565, 120, 3.05, C.deep, 7);
+K.exit($('hero'), 4.2, .38);
+K.finish();
+})();
+</script></body></html>

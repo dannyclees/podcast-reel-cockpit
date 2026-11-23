@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=1080, height=960"/>
+<title>Chain flight</title>
+<script src="gsap.min.js"></script><link rel="stylesheet" href="brand.css"/><link rel="stylesheet" href="brand.css"/><link rel="stylesheet" href="kit.css"/>
+<style>
+html, body, #root { width: 1080px; height: 960px; }
+#world { position: absolute; left: 0; top: 0; width: 2600px; height: 960px; transform-origin: 0 0; }
+.node { position: absolute; width: 440px; height: 440px; }
+.node .card { inset: 0; display: flex; align-items: center; justify-content: center; }
+.node .card svg { position: relative; width: 360px; height: 360px; overflow: visible; }
+.node .tint { position: absolute; inset: 0; border-radius: 48px; background: var(--alarm); opacity: 0; }
+.lab { position: absolute; width: 600px; margin-left: -300px; text-align: center; font-size: 100px; text-transform: uppercase; }
+</style></head><body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="4.8" data-fps="30" data-width="1080" data-height="960">
+  <div id="world"></div>
+</div>
+<script src="kit.js"></script>
+<script>
+(function () {
+/* INPUTS: three steps (label + drawing), the last one can be an alert. Swap the SVG drawings per story. */
+const C = K.C, root = document.getElementById('root'), world = document.getElementById('world');
+K.ground(root, { seed: 9 });
+const tl = K.timeline(4.8); window.__timelines['main'] = tl;
+const XS = [540, 1260, 1980], Y = 410, HW = 220;
+const ART = {
+  device: `<rect x="70" y="30" width="160" height="250" rx="26" fill="var(--paper-2)" stroke="var(--on-paper)" stroke-width="9"/>
+    <line x1="70" y1="112" x2="230" y2="112" stroke="var(--on-paper)" stroke-width="9"/>
+    <rect x="96" y="58" width="14" height="34" rx="7" fill="var(--accent-deep)"/><rect x="96" y="136" width="14" height="70" rx="7" fill="var(--accent-deep)"/>
+    <g fill="none" stroke="var(--accent)" stroke-width="6" stroke-linecap="round" opacity=".9"><path d="M150 170 l40 0 M170 150 l0 40 M156 156 l28 28 M184 156 l-28 28"/></g>
+    <g class="wifi" fill="none" stroke="var(--accent-deep)" stroke-width="10" stroke-linecap="round"><path class="w1" d="M236 22 a22 22 0 0 1 22 22"/><path class="w2" d="M236 -6 a50 50 0 0 1 50 50"/></g>`,
+  cloud: `<path d="M86 214 a56 56 0 0 1 4-112 a74 74 0 0 1 140-6 a58 58 0 0 1 6 118 z" fill="var(--accent-tint)" stroke="var(--accent-deep)" stroke-width="10" stroke-linejoin="round"/>
+    <g stroke="var(--accent-deep)" stroke-width="12" stroke-linecap="round"><line class="d1" x1="110" y1="150" x2="200" y2="150"/><line class="d2" x1="110" y1="182" x2="170" y2="182"/></g>`,
+  lock: `<path class="shackle" d="M100 140 V96 a50 50 0 0 1 100 0 V140" fill="none" stroke="var(--on-paper)" stroke-width="22" stroke-linecap="round"/>
+    <rect class="body" x="66" y="130" width="168" height="138" rx="30" fill="var(--on-paper)"/>
+    <circle cx="150" cy="190" r="16" fill="var(--paper)"/><rect x="143" y="196" width="14" height="36" rx="7" fill="var(--paper)"/>`
+};
+const STEPS = [{ label: 'Device', art: 'device' }, { label: 'Cloud', art: 'cloud' }, { label: 'Alert', art: 'lock', alert: true }];
+const nodes = STEPS.map((s, i) => {
+  const n = K.el(world, 'node', { left: (XS[i] - HW) + 'px', top: (Y - HW) + 'px' });
+  const c = K.el(n, 'card'); const tint = K.el(c, 'tint');
+  c.insertAdjacentHTML('beforeend', `<svg viewBox="25 -10 250 310">${ART[s.art]}</svg>`);
+  const l = K.el(world, 'abs disp lab', { left: XS[i] + 'px', top: (Y + HW + 52) + 'px', color: s.alert ? C.alarm : C.onPaper }, s.label);
+  return { n, c, tint, l };
+});
+// wires: ink track draws, accent lit layer follows the packet
+const svg = K.svg(world, 2600, 960);
+const wires = [0, 1].map(i => { const d = `M${XS[i] + HW + 26} ${Y} L${XS[i + 1] - HW - 26} ${Y}`;
+  const track = K.mk(svg, 'path', { d, stroke: C.onPaper, 'stroke-width': 9, 'stroke-linecap': 'round', fill: 'none' });
+  const lit = K.mk(svg, 'path', { d, stroke: i ? C.alarm : C.deep, 'stroke-width': 9, 'stroke-linecap': 'round', fill: 'none' });
+  const ends = [XS[i] + HW + 26, XS[i + 1] - HW - 26].map(x => K.mk(svg, 'circle', { cx: x, cy: Y, r: 13, fill: 'var(--paper)', stroke: C.onPaper, 'stroke-width': 6, opacity: 0 }));
+  return { track, lit, ends }; });
+
+// beats
+K.land(nodes[0].n, 0.0, { scale: .86, y: 50 }, .6, 'power3.out'); K.rise(nodes[0].l, .3, 30);
+tl.fromTo(nodes[0].c.querySelectorAll('.wifi path'), { opacity: 0 }, { opacity: 1, duration: .2, stagger: .15, repeat: 3, yoyo: true }, .45);
+function hop(i, t, alert) {          // wire draws, packet rides, next node lands and pulses on arrival
+  const w = wires[i];
+  K.draw(w.track, t, .35, 'power2.out'); K.draw(w.lit, t + .2, .55, 'power2.inOut');
+  tl.to(w.ends, { attr: { opacity: 1 }, duration: .12, stagger: .25 }, t);
+  K.packet(world, w.track, t + .2, .55, alert ? C.alarm : C.deep, 40);
+  K.land(nodes[i + 1].n, t + .25, { scale: .86, y: 40 }, .5, 'power3.out');
+  K.pulse(world, XS[i + 1], Y, 250, t + .75, alert ? C.alarm : C.deep, 9); K.kick(nodes[i + 1].c, t + .75, .05);
+  K.rise(nodes[i + 1].l, t + .85, 30);
+}
+hop(0, 0.75); hop(1, 1.95, true);
+tl.fromTo(nodes[1].c.querySelectorAll('.d1, .d2'), { attr: { x2: 110 } }, { attr: { x2: (k, e) => e.classList.contains('d1') ? 200 : 170 }, duration: .4, ease: 'power3.out', stagger: .12 }, 1.6);
+// the alert: shackle springs open, the card floods red, shakes, rings twice
+const lock = nodes[2].c, sh = lock.querySelector('.shackle'), body = lock.querySelector('.body');
+tl.to(sh, { y: -46, rotation: -24, svgOrigin: '200 140', duration: .3, ease: 'back.out(3)' }, 2.72);
+tl.to(body, { attr: { fill: C.paper }, duration: .15 }, 2.72); tl.to(sh, { attr: { stroke: C.paper }, duration: .15 }, 2.72);
+tl.to(nodes[2].tint, { opacity: 1, duration: .15 }, 2.72);
+K.shake(nodes[2].n, 2.75, 18, 6); K.pulse(world, XS[2], Y, 260, 3.15, C.alarm, 8);
+// camera: node to node, then pull out to the whole chain
+const KEYS = [{ t: 0, x: 540, s: 1.04 }, { t: 0.9, x: 540, s: 1.0, e: 'sine.out' }, { t: 1.55, x: 1260, s: 1.0, e: 'power3.inOut' }, { t: 2.1, x: 1260, s: .98, e: 'none' },
+  { t: 2.75, x: 1980, s: 1.0, e: 'power3.inOut' }, { t: 3.45, x: 1980, s: 1.03, e: 'none' }, { t: 4.1, x: 1260, s: .5, e: 'expo.inOut' }, { t: 4.8, x: 1260, s: .52, e: 'none' }];
+KEYS.forEach(k => k.ef = k.e ? gsap.parseEase(k.e) : null);
+K.every(t => { let x = KEYS[0].x, s = KEYS[0].s;
+  for (let i = 1; i < KEYS.length; i++) { const a = KEYS[i - 1], b = KEYS[i]; if (t <= b.t) { const u = b.ef((t - a.t) / (b.t - a.t));
+      x = a.x + (b.x - a.x) * u; s = Math.exp(Math.log(a.s) + (Math.log(b.s) - Math.log(a.s)) * u); break; } x = b.x; s = b.s; }
+  world.style.transform = `translate(${540 - x * s}px, ${450 - Y * s + (1 - s) * 60}px) scale(${s})`; }, 0, 4.8);
+// living hold: small packets keep riding the whole chain
+[4.05, 4.4].forEach(t => { K.packet(world, wires[0].track, t, .4, C.deep, 30, 'none'); K.packet(world, wires[1].track, t + .1, .4, C.alarm, 30, 'none'); });
+K.pulse(world, XS[2], Y, 260, 4.2, C.alarm, 9);
+K.finish();
+})();
+</script></body></html>

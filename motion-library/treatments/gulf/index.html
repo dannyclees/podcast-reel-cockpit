@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=1080, height=960"/>
+<title>Gulf</title>
+<script src="gsap.min.js"></script><link rel="stylesheet" href="brand.css"/><link rel="stylesheet" href="kit.css"/>
+<style>
+html, body, #root { width: 1080px; height: 960px; }
+#hero { position: absolute; inset: 0; }
+.tile { position: absolute; display: flex; align-items: center; justify-content: center; }
+.tile img { width: 62%; height: 62%; }
+.big { width: 230px; height: 230px; border-radius: 64px; top: 70px; }
+.mid { width: 150px; height: 150px; border-radius: 44px; top: 560px; }
+.low { width: 120px; height: 120px; border-radius: 36px; top: 760px; }
+.pill { position: absolute; top: 784px; height: 72px; border-radius: 36px; padding: 0 30px; background: var(--paper); font-size: 34px; line-height: 72px; color: var(--on-paper); box-shadow: var(--cast); }
+#gap { position: absolute; left: 120px; right: 120px; top: 340px; height: 180px; }
+#gap .ln { position: absolute; left: 0; right: 0; height: 4px; border-radius: 2px; background: repeating-linear-gradient(90deg, var(--accent-deep) 0 22px, transparent 22px 40px); transform-origin: 50% 50%; }
+#arrow { position: absolute; left: 50%; top: 326px; width: 6px; margin-left: -3px; height: 208px; background: var(--accent-deep); border-radius: 3px; transform-origin: 50% 0%; }
+</style></head><body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="12" data-fps="30" data-width="1080" data-height="960">
+  <div id="hero">
+    <div id="t_a" class="tile card big" style="left:245px"><img src="logos/sample-a.svg" alt="Sample A"/></div>
+    <div id="t_o" class="tile card big" style="left:605px"><img src="logos/sample-b.svg" alt="Sample B"/></div>
+    <div id="gap"><div class="ln" style="top:0"></div><div class="ln" style="bottom:0"></div></div>
+    <div id="arrow"></div>
+    <div id="mids"></div>
+    <div id="lows"></div>
+  </div>
+</div>
+<script src="kit.js"></script>
+<script>
+(function () {
+/* INPUTS: two winners on top, a gulf, a middle cluster (logos), a cheap tier (one logo + names). Times = when each is said. */
+const IN = { mid: ['sample-c', 'sample-d', 'sample-e', 'sample-c', 'sample-d'], lowLogo: 'sample-e', lowNames: ['Small', 'Medium', 'Large'],
+             tGulf: 3.2, tMid: 4.1, tCluster: 5.3, tLow: [8.7, 9.2, 10.1, 10.7] };
+const C = K.C, root = document.getElementById('root'); K.ground(root, { seed: 33 });
+const tl = K.timeline(12); window.__timelines['main'] = tl;
+const $ = id => document.getElementById(id);
+// the two winners are there from the first frame (R77: no graphic waits a sentence)
+tl.fromTo('#t_a', { scale: .8, y: 30 }, { scale: 1, y: 0, duration: .3, ease: 'back.out(2)' }, 0);
+tl.fromTo('#t_o', { scale: .8, y: 30 }, { scale: 1, y: 0, duration: .3, ease: 'back.out(2)' }, .08);
+K.kick($('t_a'), .9, .06); K.kick($('t_o'), 1.5, .06);
+// "a bit of a gulf": the dashed edges pull apart and the drop line falls through the empty band
+tl.fromTo('#gap .ln', { scaleX: 0, opacity: 0 }, { scaleX: 1, opacity: 1, duration: .4, ease: 'expo.out', stagger: .08 }, IN.tGulf - .2);
+tl.fromTo('#arrow', { scaleY: 0 }, { scaleY: 1, duration: .45, ease: 'power3.out' }, IN.tGulf);
+// "everybody else": the middle tiles drop in spread out, then cluster tight around the middle
+const mids = IN.mid.map((lg, i) => K.el($('mids'), 'tile card mid', { left: (40 + i * 210) + 'px' }, `<img src="logos/${lg}.svg" alt="${lg}"/>`));
+mids.forEach((m, i) => tl.fromTo(m, { y: -120, opacity: 0 }, { y: 0, opacity: 1, duration: .3, ease: 'power3.out' }, IN.tMid + i * .06));
+mids.forEach((m, i) => tl.to(m, { x: (2 - i) * 120, rotation: (i - 2) * 3, duration: .5, ease: 'power3.inOut' }, IN.tCluster));
+// "the final category": the cheap tier pops in on each name
+const low = K.el($('lows'), 'tile card low', { left: '140px' }, `<img src="logos/${IN.lowLogo}.svg" alt="${IN.lowLogo}"/>`);
+const pills = IN.lowNames.map((n, i) => K.el($('lows'), 'pill mono', { left: (310 + i * 220) + 'px' }, n));
+[low].concat(pills).forEach((e, i) => tl.fromTo(e, { scale: .6, opacity: 0 }, { scale: 1, opacity: 1, duration: .3, ease: 'back.out(2.2)' }, IN.tLow[i]));
+K.finish();
+})();
+</script></body></html>

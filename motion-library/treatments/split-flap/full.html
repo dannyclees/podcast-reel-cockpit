@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=1080, height=1920"/>
+<title>Full · Split flap</title>
+<script src="gsap.min.js"></script><link rel="stylesheet" href="brand.css"/><link rel="stylesheet" href="kit.css"/>
+<style>
+html, body, #root { width: 1080px; height: 1920px; }
+/* full 9:16 version: the same graphic, lifted into the upper-middle so the caption band (y 1500 to 1760) stays clear */
+#root > *:not(.ground):not(.grain) { margin-top: 380px; }
+#hero { position: absolute; inset: 0; }
+#board { left: 44px; top: 170px; width: 992px; height: 360px; overflow: hidden; }
+.tile { position: absolute; top: 70px; width: 110px; height: 220px; border-radius: 20px; overflow: hidden;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 88%, var(--on-panel)) 0%, var(--on-paper) 50%, color-mix(in srgb, var(--panel) 94%, var(--on-panel)) 50.5%, var(--on-paper) 100%); box-shadow: 0 10px 18px -8px color-mix(in srgb, var(--on-paper) 60%, transparent); }
+.strip { position: absolute; left: 0; top: 0; width: 110px; }
+.strip div { height: 220px; line-height: 226px; text-align: center; font-size: 178px; color: var(--paper); }
+.tile .hinge { position: absolute; left: 0; right: 0; top: 109px; height: 3px; background: rgba(0,0,0,.65); box-shadow: 0 1px 0 rgba(255,255,255,.06); }
+.tile .gloss { position: absolute; left: 0; right: 0; top: 0; height: 110px; background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,0)); }
+.comma { position: absolute; top: 196px; font-size: 150px; color: var(--on-paper); }
+#shine { position: absolute; top: 0; left: -40%; width: 30%; height: 100%; background: linear-gradient(100deg, rgba(255,255,255,0), rgba(255,255,255,.22), rgba(255,255,255,0)); }
+#lab { left: 0; right: 0; top: 610px; text-align: center; font-size: 124px; text-transform: uppercase; }
+#bar { left: 340px; width: 400px; top: 762px; height: 16px; border-radius: 8px; background: var(--accent-deep); transform-origin: 0 50%; }
+</style></head><body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="4.6" data-fps="30" data-width="1080" data-height="1920">
+  <div id="hero">
+    <div id="board" class="card"><div id="shine"></div></div>
+    <div id="lab" class="abs disp">Items</div>
+    <div id="bar" class="abs"></div>
+  </div>
+</div>
+<script src="kit.js"></script>
+<script>
+(function () {
+/* INPUTS: value as a string (digits and commas, up to 9 tiles), label (1 to 2 words). */
+const IN = { value: '1,000,000', label: 'Items' };
+const C = K.C, root = document.getElementById('root'); K.ground(root, { seed: 41 });
+const tl = K.timeline(4.6); window.__timelines['main'] = tl;
+const board = document.getElementById('board'), TW = 110, TH = 220, GAP = 12, CW = 40;
+const chars = IN.value.split(''), width = chars.reduce((w, c) => w + (c === ',' ? CW + GAP : TW + GAP), -GAP);
+let x = (992 - width) / 2; const reels = [], r = K.rng(4);
+chars.forEach((ch, i) => {
+  if (ch === ',') { const c = K.el(board, 'abs disp comma', { left: (x + 4) + 'px' }, ','); K.rise(c, .9 + reels.length * .13, 20, .3); x += CW + GAP; return; }
+  const k = reels.length, n = 16 + k * 3, digits = []; for (let j = 0; j < n; j++) digits.push(Math.floor(r() * 10)); digits.push(+ch); digits.push((+ch + 1) % 10);   // one spare digit so the back.out overshoot never shows an empty strip
+  // blur the small window, never the 6000 px strip (Chrome drops huge filtered layers)
+  const t = K.el(board, 'tile', { left: x + 'px' }); const win = K.el(t, 'abs', { inset: '0', overflow: 'hidden' }); const s = K.el(win, 'strip'); s.innerHTML = digits.map(d => `<div class="disp">${d}</div>`).join('');
+  K.el(t, 'gloss'); K.el(t, 'hinge');
+  reels.push({ t, s, win, n, start: .15 + k * .03, land: .95 + k * .13, len: digits.length }); x += TW + GAP;
+});
+const e1 = gsap.parseEase('back.out(1.15)'), e2 = gsap.parseEase('power3.inOut');
+function pos(R, t) {                 // reel position (in digits) as a pure function of time
+  if (t <= R.start) return 0;
+  if (t < R.land) return R.n * e1((t - R.start) / (R.land - R.start));
+  return R.n;
+}
+K.every(t => reels.forEach(R => { const p = pos(R, t), v = Math.abs(pos(R, t + 1 / 60) - p) * 60;
+  R.s.style.transform = `translateY(${(-p * TH).toFixed(1)}px)`; R.win.style.filter = v > 4 ? `blur(${Math.min(4, v / 14).toFixed(1)}px)` : 'none'; }), 0, 4.6);
+reels.forEach((R, k) => { K.land(R.t, .05 + k * .04, { scale: .85, y: 30 }, .45, 'power3.out'); K.kick(R.t, R.land, .04); K.kick(R.t, 3.2 + k * .07, .05); });   // living hold: a wave of flap kicks, the value never changes
+K.land(board, 0, { scale: .94, y: 40 }, .5, 'power3.out');
+K.rise(document.getElementById('lab'), 1.85, 40, .45);
+tl.fromTo('#bar', { scaleX: 0 }, { scaleX: 1, duration: .55, ease: 'expo.out' }, 2.2);
+tl.fromTo('#shine', { left: '-40%' }, { left: '120%', duration: .8, ease: 'power2.inOut' }, 2.6);
+tl.to('#bar', { scaleX: .55, duration: .4, ease: 'power2.inOut', yoyo: true, repeat: 1 }, 3.6);
+K.exit(document.getElementById('hero'), 4.2, .38);
+K.finish();
+})();
+</script></body></html>

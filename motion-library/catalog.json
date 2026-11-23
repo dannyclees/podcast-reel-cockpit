@@ -1,0 +1,296 @@
+{
+  "name": "Motion library",
+  "panel": "1080x960 top panel of a 9:16 split (full 1080x1920 where marked)",
+  "rules": [
+    "max 3 words per graphic",
+    "one hero fills the panel",
+    "something moves every 0.5-1 s",
+    "real logos when a brand is named",
+    "deterministic: seeded rng, no clocks, one paused timeline at window.__timelines.main",
+    "landings ease out from 0.6-0.9 scale, never from 0",
+    "exit by 4.2 s so it fits a 2.2-4.6 s beat"
+  ],
+  "treatments": [
+    {
+      "id": "map-drop",
+      "name": "Map drop",
+      "use_case": "place / country",
+      "shows": "A country outline draws itself, lifts off the paper with a soft cast, then N dots ripple out from the first city while the number counts on the same curve; pins drop on the beat.",
+      "example": "240 places on a map",
+      "motion": {
+        "entrance": "outline strokes on 0-0.85 s (power2.inOut), sheet fills 0.35 s",
+        "build": "dots + count 0.85-2.4 s on power2.out (same curve, so the number and the map agree); 6 pins drop every 0.32 s with squash; ripples at 0.95 / 2.5 / 3.4 s",
+        "exit": "lift + fade 4.2 s (power2.in, 0.38 s)",
+        "easing": "power2.out, back.out(3) dots, power3.in pin fall",
+        "duration_s": 4.6
+      },
+      "inputs": [
+        "value (number)",
+        "label (1 word)",
+        "outline (lon/lat list)",
+        "origin city (lon/lat)",
+        "pins (lon/lat x 3-6)",
+        "flag colours",
+        "tone (red = bad news, deep accent = neutral)"
+      ],
+      "built": true,
+      "files": {
+        "page": "treatments/map-drop/index.html",
+        "preview": "treatments/map-drop/preview.mp4",
+        "strip": "treatments/map-drop/strip.jpg",
+        "poster": "treatments/map-drop/poster.jpg",
+        "full": "treatments/map-drop/full.html",
+        "preview_full": "treatments/map-drop/preview-full.mp4"
+      },
+      "group": "place"
+    },
+    {
+      "id": "scale-reveal",
+      "name": "Scale reveal",
+      "use_case": "price comparison / number vs number",
+      "shows": "The small value fills the frame first and looks big. Then the big value punches out of the top, the axis pulls back to fit it, and the small bar shrinks to its true size. The ratio lands in the space it freed.",
+      "example": "$7,000 vs $40,000",
+      "motion": {
+        "entrance": "baseline wipes 0.45 s (expo.out), bar A rises 0.3-1.1 s (expo.out)",
+        "build": "bar B 1.25-2.6 s (power2.inOut) while axis max eases 1.55-2.7 s (power3.inOut); level line + bracket 2.75 s; ratio lands 3.0 s (back.out(2)); shine 3.45 s",
+        "exit": "lift + fade 4.2 s",
+        "easing": "expo.out, power3.inOut",
+        "duration_s": 4.6
+      },
+      "inputs": [
+        "value A + name (1 word)",
+        "value B + name (1 word)",
+        "ratio text (auto)"
+      ],
+      "built": true,
+      "files": {
+        "page": "treatments/scale-reveal/index.html",
+        "preview": "treatments/scale-reveal/preview.mp4",
+        "strip": "treatments/scale-reveal/strip.jpg",
+        "poster": "treatments/scale-reveal/poster.jpg"
+      },
+      "group": "comparison"
+    },
+    {
+      "id": "chain-flight",
+      "name": "Chain flight",
+      "use_case": "process / chain",
+      "shows": "Three cards on a wire. The camera flies card to card as a packet rides each wire; each card pulses on arrival; the last one is the alert (shackle springs open, card floods red, shakes). Then the camera pulls out to the whole chain.",
+      "example": "device -> cloud -> alert",
+      "motion": {
+        "entrance": "card 1 lands 0-0.6 s (power3.out), wifi arcs blink",
+        "build": "hop = wire draws 0.35 s + packet 0.55 s + next card lands + pulse; hops at 0.75 and 1.95 s; alert at 2.72 s (back.out(3) shackle, 6-step shake, red ring); camera power3.inOut between cards",
+        "exit": "pull-out to the whole chain 3.45-4.1 s (expo.inOut), ambient packets keep riding",
+        "easing": "power3.inOut camera, power2.inOut packets",
+        "duration_s": 4.8
+      },
+      "inputs": [
+        "3 steps: label (1 word) + drawing (svg)",
+        "which step is the alert"
+      ],
+      "built": true,
+      "files": {
+        "page": "treatments/chain-flight/index.html",
+        "preview": "treatments/chain-flight/preview.mp4",
+        "strip": "treatments/chain-flight/strip.jpg",
+        "poster": "treatments/chain-flight/poster.jpg"
+      },
+      "group": "process"
+    },
+    {
+      "id": "logo-lock",
+      "name": "Logo lock",
+      "use_case": "brand / company + warning",
+      "shows": "The real logo on a big tile, alive (it turns once). A padlock falls, lands with a squash and snaps shut; the logo drains to grey. A cursor tries to click and the tile shakes no.",
+      "example": "a product locked",
+      "motion": {
+        "entrance": "tile springs in 0-0.6 s (back.out(1.6)), logo pops 0.25 s",
+        "build": "lock falls 1.0 s (power3.in), squash 1.42 s, shackle snaps 1.62 s, grey + red ring 1.74 s, pill 1.95 s; cursor 2.35-2.95 s, click + shake 3.06 s",
+        "exit": "lift + fade 4.2 s",
+        "easing": "back.out, power3.in, power4.in snap",
+        "duration_s": 4.6
+      },
+      "inputs": [
+        "logo svg (real mark)",
+        "name (1 word)",
+        "state word (1 word)"
+      ],
+      "built": true,
+      "files": {
+        "page": "treatments/logo-lock/index.html",
+        "preview": "treatments/logo-lock/preview.mp4",
+        "strip": "treatments/logo-lock/strip.jpg",
+        "poster": "treatments/logo-lock/poster.jpg"
+      },
+      "group": "brand"
+    },
+    {
+      "id": "age-shrink",
+      "name": "Age shrink",
+      "use_case": "before / after, person, body",
+      "shows": "A cross-section (bundles in a sheath). A copy slides out and ages: the counter runs 30 to 70, the disc shrinks, bundles drop out, a dashed ghost keeps the old size and the lost ring goes red.",
+      "example": "size at 30 vs 70",
+      "motion": {
+        "entrance": "sheath draws 0-0.55 s, bundles pop centre-out (back.out(2.5), 9 ms stagger)",
+        "build": "copy slides 1.0-1.55 s (power3.inOut); age counts + disc shrinks 1.65-2.9 s (power2.inOut); ghost ring 2.9 s; red gap 3.0 s; chip 3.15 s",
+        "exit": "lift + fade 4.2 s",
+        "easing": "power2.inOut",
+        "duration_s": 4.6
+      },
+      "inputs": [
+        "from value",
+        "to value",
+        "loss (0..1)",
+        "top label (1 word)"
+      ],
+      "built": true,
+      "files": {
+        "page": "treatments/age-shrink/index.html",
+        "preview": "treatments/age-shrink/preview.mp4",
+        "strip": "treatments/age-shrink/strip.jpg",
+        "poster": "treatments/age-shrink/poster.jpg"
+      },
+      "group": "before / after"
+    },
+    {
+      "id": "split-flap",
+      "name": "Split flap",
+      "use_case": "a number",
+      "shows": "A departures-board counter: each digit is a flap tile with a hinge; reels spin with motion blur and land left to right on the beat, then a wave of flap kicks keeps it alive.",
+      "example": "1,000,000 items",
+      "motion": {
+        "entrance": "board lands 0-0.5 s (power3.out), tiles stagger 40 ms",
+        "build": "reels spin 0.15 s then land every 0.13 s from 0.95 s (back.out(1.15)), blur from speed; label 1.85 s; bar 2.2 s; shine 2.6 s; flap-kick wave 3.2 s",
+        "exit": "lift + fade 4.2 s",
+        "easing": "back.out(1.15), expo.out",
+        "duration_s": 4.6,
+        "full": "preview-full.mp4"
+      },
+      "inputs": [
+        "value as text (digits + commas, up to 9 tiles)",
+        "label (1-2 words)"
+      ],
+      "built": true,
+      "files": {
+        "page": "treatments/split-flap/index.html",
+        "preview": "treatments/split-flap/preview.mp4",
+        "strip": "treatments/split-flap/strip.jpg",
+        "poster": "treatments/split-flap/poster.jpg",
+        "full": "treatments/split-flap/full.html",
+        "preview_full": "treatments/split-flap/preview-full.mp4"
+      },
+      "group": "number"
+    },
+    {
+      "id": "year-tape",
+      "name": "Year tape",
+      "use_case": "timeline / year",
+      "shows": "A ruler tape slides under a fixed accent playhead while a 4-digit odometer carries like a real counter. A short jog, then a race to the far year with speed blur; the landing brings the real logo and one word.",
+      "example": "2026 -> 2048 rollout",
+      "motion": {
+        "entrance": "tape rises 0-0.5 s, playhead drops 0.2 s (back.out(2)), odometer 0.1 s",
+        "build": "jog 2026->2028 at 0.85 s (power3.inOut 0.5 s), race 2028->2048 at 1.7 s (expo.inOut 1.35 s) with speed blur; landing pulse 3.05 s; logo + label 3.05-3.2 s",
+        "exit": "lift + fade 4.2 s",
+        "easing": "expo.inOut",
+        "duration_s": 4.6
+      },
+      "inputs": [
+        "from year",
+        "mid year (optional)",
+        "to year",
+        "landing logo svg",
+        "label (1 word)"
+      ],
+      "built": true,
+      "files": {
+        "page": "treatments/year-tape/index.html",
+        "preview": "treatments/year-tape/preview.mp4",
+        "strip": "treatments/year-tape/strip.jpg",
+        "poster": "treatments/year-tape/poster.jpg"
+      },
+      "group": "time"
+    },
+    {
+      "id": "glitch-slam",
+      "name": "Glitch slam",
+      "use_case": "warning / attack",
+      "shows": "Hazard tapes crawl in from both sides on the black ground. One word slams in from blur, then shears into slices with a red mis-registered plate on the beat; it turns red, a scanline sweeps, and it slices out.",
+      "example": "ALERT",
+      "motion": {
+        "entrance": "tapes 0-0.48 s (power3.out); slam 0.35-0.61 s (expo.in from scale 1.7 + blur) with flash + shake",
+        "build": "glitch bursts at 0.85 / 1.3 / 2.4 / 2.95 s; colour flip 1.3 s; bar 1.55 s; scanlines 1.9 / 3.5 s; flicker 3.45 s",
+        "exit": "slices fly out alternately 4.18 s (power3.in)",
+        "easing": "expo.in slam, back.out(3) snap",
+        "duration_s": 4.6,
+        "full": "preview-full.mp4"
+      },
+      "inputs": [
+        "one word (max 8 letters)"
+      ],
+      "built": true,
+      "files": {
+        "page": "treatments/glitch-slam/index.html",
+        "preview": "treatments/glitch-slam/preview.mp4",
+        "strip": "treatments/glitch-slam/strip.jpg",
+        "poster": "treatments/glitch-slam/poster.jpg",
+        "full": "treatments/glitch-slam/full.html",
+        "preview_full": "treatments/glitch-slam/preview-full.mp4"
+      },
+      "group": "warning"
+    },
+    {
+      "id": "stack-drop",
+      "name": "Stack drop",
+      "use_case": "a list / pile-up",
+      "shows": "Cards fall one by one onto a growing pile; each impact presses the cards under it. Each card is one item (real logo) with a queue bar whose dots keep shuffling: waiting, shown not said.",
+      "example": "a queue piles up, five logos",
+      "motion": {
+        "entrance": "floor wipes 0-0.45 s",
+        "build": "a card lands every 0.44 s from 0.35 s (power3.in fall, squash, back.out(4) settle), cards under it dip 5 px; label 2.55 s; pile sways 2.9 s",
+        "exit": "pile tips away card by card 4.1 s",
+        "easing": "power3.in, back.out(4)",
+        "duration_s": 4.6
+      },
+      "inputs": [
+        "3-6 logos",
+        "fill per item (0..1)",
+        "label (1 word)"
+      ],
+      "built": true,
+      "files": {
+        "page": "treatments/stack-drop/index.html",
+        "preview": "treatments/stack-drop/preview.mp4",
+        "strip": "treatments/stack-drop/strip.jpg",
+        "poster": "treatments/stack-drop/poster.jpg"
+      },
+      "group": "list"
+    },
+    {
+      "id": "logo-plug",
+      "name": "Logo plug",
+      "use_case": "product / brand joins brand",
+      "shows": "Two real logo tiles spring in. A cable pays out with a plug riding its head and clicks into the second tile; the tile lights, and data packets stream through the cable under a two-word pill.",
+      "example": "product A runs on product B",
+      "motion": {
+        "entrance": "tiles slide in from the sides 0-0.75 s (back.out(1.6)), socket 0.55 s",
+        "build": "cable + plug 0.6-1.22 s (power2.inOut), click + kicks + pulse 1.34 s, glow on; packets every 0.3 s from 1.5 s; pill 1.9 s",
+        "exit": "lift + fade 4.2 s",
+        "easing": "power2.inOut, back.out",
+        "duration_s": 4.6
+      },
+      "inputs": [
+        "logo A svg",
+        "logo B svg",
+        "label (max 2 words)"
+      ],
+      "built": true,
+      "files": {
+        "page": "treatments/logo-plug/index.html",
+        "preview": "treatments/logo-plug/preview.mp4",
+        "strip": "treatments/logo-plug/strip.jpg",
+        "poster": "treatments/logo-plug/poster.jpg"
+      },
+      "group": "brand"
+    }
+  ]
+}

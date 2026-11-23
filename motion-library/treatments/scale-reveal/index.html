@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=1080, height=960"/>
+<title>Scale reveal</title>
+<script src="gsap.min.js"></script><link rel="stylesheet" href="brand.css"/><link rel="stylesheet" href="kit.css"/>
+<style>
+html, body, #root { width: 1080px; height: 960px; }
+#hero { position: absolute; inset: 0; }
+.bar { position: absolute; bottom: 150px; border-radius: 30px 30px 8px 8px; transform-origin: 50% 100%; }
+#b1 { left: 210px; width: 260px; background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 80%, var(--on-panel)) 0%, var(--on-paper) 60%); box-shadow: var(--cast); }
+#b2 { left: 610px; width: 260px; background: linear-gradient(180deg, var(--accent) 0%, var(--accent-deep) 55%, color-mix(in srgb, var(--accent-deep) 85%, var(--on-paper)) 100%); box-shadow: 0 30px 60px -24px color-mix(in srgb, var(--accent-deep) 60%, transparent), var(--cast); overflow: hidden; }
+#shine { position: absolute; left: -120%; top: 0; width: 60%; height: 100%; background: linear-gradient(100deg, rgba(255,255,255,0), rgba(255,255,255,.45), rgba(255,255,255,0)); }
+.val { position: absolute; width: 420px; margin-left: -210px; text-align: center; font-size: 86px; }
+.name { position: absolute; top: 834px; width: 300px; margin-left: -150px; text-align: center; font-size: 38px; }
+.gl { position: absolute; left: 150px; right: 90px; height: 3px; background: color-mix(in srgb, var(--on-paper) 10%, transparent); border-radius: 2px; }
+.gl span { position: absolute; left: -96px; top: -15px; font-size: 24px; letter-spacing: .04em; color: color-mix(in srgb, var(--on-paper) 45%, transparent); }
+#x { left: 160px; top: 300px; font-size: 168px; color: var(--accent-deep); }
+</style></head><body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="4.6" data-fps="30" data-width="1080" data-height="960">
+  <div id="hero">
+    <div id="grid"></div>
+    <div id="base" class="abs" style="left:130px;right:90px;top:808px;height:6px;border-radius:3px;background:var(--on-paper);transform-origin:0 50%"></div>
+    <div id="b1" class="bar"></div>
+    <div id="b2" class="bar"><div id="shine"></div></div>
+    <div id="v1" class="abs disp val">$0</div>
+    <div id="v2" class="abs disp val">$0</div>
+    <div id="n1" class="abs mono name" style="left:340px">Option A</div>
+    <div id="n2" class="abs mono name" style="left:740px">Option B</div>
+    <svg id="meas" class="layer" width="1080" height="960"></svg>
+    <div id="x" class="abs disp">5.7&times;</div>
+  </div>
+</div>
+<script src="kit.js"></script>
+<script>
+(function () {
+/* INPUTS: a (small value + name), b (big value + name). The axis rescales so the gap is felt, not read. */
+const IN = { a: 7000, b: 40000 };
+const C = K.C, root = document.getElementById('root'); K.ground(root, { seed: 5 });
+const tl = K.timeline(4.6); window.__timelines['main'] = tl;
+const BASE = 810, H = 600;                         // baseline y, chart height in px
+const S = { v1: 0, v2: 0, max: IN.a * 1.15 };     // the whole chart is a pure function of this state
+const grid = document.getElementById('grid'), steps = [2000, 4000, 6000, 8000, 10000, 20000, 30000, 40000];
+const lines = steps.map(v => K.el(grid, 'gl', { top: '0px' }, `<span class="mono">${v >= 1000 ? '$' + v / 1000 + 'K' : v}</span>`));
+const b1 = document.getElementById('b1'), b2 = document.getElementById('b2'), v1 = document.getElementById('v1'), v2 = document.getElementById('v2');
+const y = v => BASE - v / S.max * H;
+function render() {
+  const h1 = Math.max(0, BASE - y(S.v1)), h2 = Math.max(0, BASE - y(S.v2));
+  b1.style.height = h1 + 'px'; b2.style.height = h2 + 'px';
+  v1.style.left = '340px'; v1.style.top = (BASE - h1 - 112) + 'px';
+  v2.style.left = '740px'; v2.style.top = Math.max(-200, BASE - h2 - 112) + 'px';
+  const t1 = '$' + Math.round(S.v1).toLocaleString('en-US'), t2 = '$' + Math.round(S.v2).toLocaleString('en-US');
+  if (v1.textContent !== t1) v1.textContent = t1; if (v2.textContent !== t2) v2.textContent = t2;
+  steps.forEach((v, i) => { const yy = y(v), coarse = S.max > 20000; const want = coarse ? v % 10000 === 0 : v < 10000;
+    lines[i].style.top = yy + 'px'; lines[i].style.opacity = (yy > 90 && yy < BASE - 10 && want) ? 1 : 0; });
+}
+const go = (props, t, dur, ease) => tl.to(S, Object.assign({ duration: dur, ease, onUpdate: render }, props), t);
+render();
+tl.fromTo('#base', { scaleX: 0 }, { scaleX: 1, duration: .45, ease: 'expo.out' }, 0);
+tl.fromTo(grid, { opacity: 0 }, { opacity: 1, duration: .4 }, .15);
+go({ v1: IN.a }, .3, .8, 'expo.out');                                  // small bar fills the frame first: it looks big
+K.rise(document.getElementById('n1'), .45); K.rise(v1, .3, 20, .3);
+go({ v2: IN.b }, 1.25, 1.35, 'power2.inOut');                          // big bar punches out of the top...
+go({ max: IN.b * 1.12 }, 1.55, 1.15, 'power3.inOut');                  // ...and the camera's axis pulls back to fit it
+K.rise(document.getElementById('n2'), 1.3); K.rise(v2, 1.3, 20, .25);
+// measure: dashed level line from the small bar's top, accent bracket up the big bar, ratio lands in the space it freed
+const meas = document.getElementById('meas'), yA = BASE - IN.a / (IN.b * 1.12) * H, yB = BASE - IN.b / (IN.b * 1.12) * H;
+const lvl = K.mk(meas, 'path', { d: `M470 ${yA} L 590 ${yA}`, stroke: C.onPaper, 'stroke-width': 5, 'stroke-dasharray': '4 14', 'stroke-linecap': 'round', fill: 'none', opacity: 0 });
+const br = K.mk(meas, 'path', { d: `M905 ${yA} L 925 ${yA} L 925 ${yB} L 905 ${yB}`, stroke: C.deep, 'stroke-width': 8, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', fill: 'none' });
+tl.to(lvl, { attr: { opacity: 1 }, duration: .3 }, 2.75); K.draw(br, 2.8, .45, 'power2.out');
+K.land(document.getElementById('x'), 3.0, { scale: .7, y: 30, rotation: -6 }, .55, 'back.out(2)');
+K.kick(b2, 3.0, .03);
+tl.fromTo('#shine', { left: '-120%' }, { left: '160%', duration: .7, ease: 'power2.inOut' }, 3.45);
+K.kick(b1, 3.8, .08);
+K.exit(document.getElementById('hero'), 4.2, .38);
+K.finish();
+})();
+</script></body></html>

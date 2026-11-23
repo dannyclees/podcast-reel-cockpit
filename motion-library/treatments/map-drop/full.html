@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=1080, height=1920"/>
+<title>Full · Map drop</title>
+<script src="gsap.min.js"></script><link rel="stylesheet" href="brand.css"/><link rel="stylesheet" href="kit.css"/>
+<style>
+html, body, #root { width: 1080px; height: 1920px; }
+/* full 9:16 version: the same graphic, lifted into the upper-middle so the caption band (y 1500 to 1760) stays clear */
+#root > *:not(.ground):not(.grain) { margin-top: 380px; }
+#cam { position: absolute; inset: 0; transform-origin: 700px 520px; }
+#map { position: absolute; left: 0; top: 0; filter: drop-shadow(0 34px 34px color-mix(in srgb, var(--on-paper) 22%, transparent)) drop-shadow(0 4px 6px color-mix(in srgb, var(--on-paper) 10%, transparent)); }
+#num { left: 72px; top: 64px; font-size: 236px; color: var(--on-paper); }
+#lab { left: 80px; top: 296px; font-size: 50px; color: var(--on-paper); }
+#flag { left: 80px; top: 384px; width: 132px; height: 88px; border-radius: 14px; overflow: hidden; display: flex; box-shadow: var(--cast); }
+#flag div { flex: 1; }
+.pin { position: absolute; width: 64px; height: 84px; margin: -84px 0 0 -32px; transform-origin: 32px 84px; }
+.pshadow { position: absolute; width: 44px; height: 14px; margin: -7px 0 0 -22px; border-radius: 50%; background: color-mix(in srgb, var(--on-paper) 28%, transparent); filter: blur(4px); }
+</style></head><body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="4.6" data-fps="30" data-width="1080" data-height="1920">
+  <div id="cam"></div>
+  <div id="num" class="abs disp">0</div>
+  <div id="lab" class="abs mono">Places</div>
+  <div id="flag" class="abs"><div style="background:var(--accent-deep)"></div><div style="background:var(--paper)"></div><div style="background:var(--alarm)"></div></div>
+</div>
+<script src="kit.js"></script>
+<script>
+(function () {
+/* INPUTS: value, label, outline (lon/lat), pins (lon/lat), flag colours, tone */
+const IN = { value: 240, label: 'Places', tone: K.C.alarm, dots: 240, origin: [2.35, 48.86],
+  pins: [[2.35, 48.86], [4.84, 45.76], [5.37, 43.30], [-0.58, 44.84], [3.06, 50.63], [-1.55, 47.22]] };
+// a sample shape, lon/lat, clockwise. Paste a real outline per Short (natural earth data)
+const FR = [[8.97,46.6],[8.65,46.03],[8.15,45.53],[7.6,45.09],[7.09,44.67],[6.67,44.23],[6.26,43.74],[5.77,43.23],[5.11,42.76],[4.26,42.43],[3.29,42.28],[2.3,42.32],[1.36,42.5],[0.49,42.75],[-0.32,43.02],[-1.08,43.31],[-1.81,43.64],[-2.44,44.03],[-2.93,44.5],[-3.26,45.01],[-3.48,45.54],[-3.65,46.07],[-3.83,46.6],[-4.02,47.17],[-4.13,47.78],[-4.04,48.41],[-3.67,49.0],[-3.01,49.47],[-2.12,49.79],[-1.15,49.96],[-0.21,50.04],[0.65,50.1],[1.47,50.2],[2.3,50.32],[3.18,50.42],[4.1,50.42],[5.0,50.3],[5.84,50.04],[6.58,49.68],[7.24,49.27],[7.84,48.83],[8.38,48.34],[8.8,47.79],[9.02,47.2]];
+const CO = [[9.61,42.2],[9.44,41.69],[9.1,41.43],[8.75,41.67],[8.61,42.2],[8.73,42.75],[9.1,42.93],[9.46,42.73]];
+
+const C = K.C, root = document.getElementById('root'), cam = document.getElementById('cam');
+K.ground(root, { seed: 3 });
+const tl = K.timeline(4.6); window.__timelines['main'] = tl;
+
+// projection: equirectangular at 46.5 N, fitted into a 620 px box
+const BX = 400, BY = 196, S = 63, KX = Math.cos(46.5 * Math.PI / 180), LON0 = -4.8, LAT0 = 51.1;
+const P = ([lo, la]) => [BX + (lo - LON0) * KX * S, BY + (LAT0 - la) * S];
+const fr = FR.map(P), co = CO.map(P);
+const svg = K.svg(cam, 1080, 960); svg.id = 'map';
+const dpath = pts => 'M' + pts.map(p => p.map(v => v.toFixed(1)).join(',')).join('L') + 'Z';
+const sheet = K.mk(svg, 'path', { d: dpath(fr) + dpath(co), fill: 'var(--paper)', opacity: 0 });
+const edge = K.mk(svg, 'path', { d: dpath(fr), fill: 'none', stroke: C.onPaper, 'stroke-width': 7, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' });
+const edge2 = K.mk(svg, 'path', { d: dpath(co), fill: 'none', stroke: C.onPaper, 'stroke-width': 7, 'stroke-linejoin': 'round' });
+K.draw(edge, 0.0, 0.85, 'power2.inOut'); K.draw(edge2, 0.6, 0.3, 'power2.out');
+tl.to(sheet, { attr: { opacity: 1 }, duration: .5, ease: 'power2.out' }, 0.35);
+
+// dots: seeded, evenly spaced, inside the outline, revealed outward from the origin city
+const inside = (x, y, poly) => { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [xi, yi] = poly[i], [xj, yj] = poly[j];
+  if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) c = !c; } return c; };
+const r = K.rng(7), dots = []; let guard = 0;
+while (dots.length < IN.dots && guard++ < 40000) { const x = BX + r() * 640, y = BY + r() * 650;
+  if (!inside(x, y, fr) || dots.some(d => (d[0] - x) ** 2 + (d[1] - y) ** 2 < 19 * 19)) continue; dots.push([x, y]); }
+const O = P(IN.origin); dots.sort((a, b) => Math.hypot(a[0] - O[0], a[1] - O[1]) - Math.hypot(b[0] - O[0], b[1] - O[1]));
+const T0 = 0.85, TD = 1.55, N = dots.length;
+dots.forEach(([x, y], k) => { const c = K.mk(svg, 'circle', { cx: x.toFixed(1), cy: y.toFixed(1), r: 0, fill: k % 9 === 4 ? C.onPaper : IN.tone });
+  const u = 1 - Math.sqrt(1 - k / N);                         // same curve as the count (power2.out)
+  tl.to(c, { attr: { r: 6 }, duration: .22, ease: 'back.out(3)' }, T0 + u * TD); });
+K.count(document.getElementById('num'), T0, 0, IN.value, TD, K.fmt.plain, 'power2.out');
+
+// pins: drop on the beat with a squash and a contact shadow
+IN.pins.forEach((ll, k) => { const [x, y] = P(ll), t = 1.0 + k * 0.32;
+  const sh = K.el(cam, 'pshadow', { left: x + 'px', top: y + 'px' });
+  const pin = K.el(cam, 'pin', { left: x + 'px', top: y + 'px' },
+    `<svg viewBox="0 0 64 84" width="64" height="84"><path d="M32 82C32 82 4 50 4 30a28 28 0 0 1 56 0c0 20-28 52-28 52z" fill="${k ? C.onPaper : IN.tone}" stroke="var(--paper)" stroke-width="5"/><circle cx="32" cy="30" r="11" fill="var(--paper)"/></svg>`);
+  tl.fromTo(pin, { y: -260, opacity: 0, scaleY: 1.15 }, { y: 0, opacity: 1, scaleY: 1, duration: .42, ease: 'power3.in' }, t);
+  tl.to(pin, { scaleY: .8, scaleX: 1.15, duration: .07, ease: 'power2.out' }, t + .42);
+  tl.to(pin, { scaleY: 1, scaleX: 1, duration: .45, ease: 'back.out(4)' }, t + .49);
+  tl.fromTo(sh, { opacity: 0, scale: .3 }, { opacity: 1, scale: 1, duration: .42, ease: 'power3.in' }, t);
+  tl.to(pin, { y: -10, duration: .5, ease: 'sine.inOut', yoyo: true, repeat: 1 }, 2.9 + k * .08);   // living hold
+});
+// ripples from the origin city on the beat
+K.pulse(cam, O[0], O[1], 70, 0.95, IN.tone, 7); K.pulse(cam, O[0], O[1], 120, 2.5, IN.tone, 6); K.pulse(cam, O[0], O[1], 160, 3.4, IN.tone, 5);
+
+// text + flag
+K.land(document.getElementById('num'), 0.8, { scale: .9, y: 30 }, .5, 'power3.out');
+K.rise(document.getElementById('lab'), 1.15);
+K.land(document.getElementById('flag'), 1.5, { scale: .7, y: 20, rotation: -8 });
+tl.to('#flag', { rotation: 3, duration: .6, ease: 'sine.inOut', yoyo: true, repeat: 1 }, 2.6);
+
+// camera: slow settle push, ground parallax
+tl.fromTo(cam, { scale: 1.07, x: 30, y: 24 }, { scale: 1, x: 0, y: 0, duration: 3.2, ease: 'power2.out' }, 0);
+tl.fromTo(root.querySelector('.ground'), { x: 12, y: 10 }, { x: 0, y: 0, duration: 3.2, ease: 'power2.out' }, 0);
+tl.to(cam, { scale: 1.02, duration: 1.0, ease: 'sine.inOut' }, 3.2);
+
+// exit
+K.exit(cam, 4.2, .38); K.exit(['#num', '#lab', '#flag'], 4.15, .35);
+K.finish();
+})();
+</script></body></html>

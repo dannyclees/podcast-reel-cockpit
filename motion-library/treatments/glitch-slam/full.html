@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=1080, height=1920"/>
+<title>Full · Glitch slam</title>
+<script src="gsap.min.js"></script><link rel="stylesheet" href="brand.css"/><link rel="stylesheet" href="brand.css"/><link rel="stylesheet" href="kit.css"/>
+<style>
+html, body, #root { width: 1080px; height: 1920px; }
+/* full 9:16 version: the same graphic, lifted into the upper-middle so the caption band (y 1500 to 1760) stays clear */
+#root > *:not(.ground):not(.grain) { margin-top: 380px; }
+.tape { position: absolute; left: -80px; right: -80px; height: 86px; box-shadow: 0 20px 40px -10px rgba(0,0,0,.6);
+  background: repeating-linear-gradient(-45deg, var(--alarm) 0 40px, var(--on-paper) 40px 80px); border-top: 6px solid var(--paper); border-bottom: 6px solid var(--paper); }
+#t1 { top: 74px; transform: rotate(-3deg); } #t2 { top: 800px; transform: rotate(2.5deg); }
+#word { position: absolute; left: 0; top: 300px; width: 1080px; height: 330px; }
+.slice { position: absolute; left: 0; width: 1080px; overflow: hidden; }
+.slice .w { position: absolute; left: 0; width: 1080px; text-align: center; font-size: 204px; line-height: 330px; }
+.plate .w { color: var(--alarm); } .main .w { color: var(--paper); }
+#flash { position: absolute; inset: 0; background: var(--paper); opacity: 0; }
+#scan { position: absolute; left: 0; right: 0; height: 120px; background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--alarm) 22%, transparent), transparent); mix-blend-mode: screen; }
+#bar { left: 250px; width: 580px; top: 650px; height: 18px; border-radius: 9px; background: var(--alarm); transform-origin: 50% 50%; }
+</style></head><body>
+<div id="root" class="dark" data-composition-id="main" data-start="0" data-duration="4.6" data-fps="30" data-width="1080" data-height="1920">
+  <div id="t1" class="tape"></div><div id="t2" class="tape"></div>
+  <div id="word"></div>
+  <div id="bar" class="abs"></div>
+  <div id="scan"></div>
+  <div id="flash"></div>
+</div>
+<script src="kit.js"></script>
+<script>
+(function () {
+/* INPUTS: one word (max 8 letters at this size), tone. */
+const IN = { word: 'ALERT' };
+const C = K.C, root = document.getElementById('root'); K.ground(root, { seed: 61 });
+const tl = K.timeline(4.6); window.__timelines['main'] = tl;
+const $ = id => document.getElementById(id), word = $('word'), N = 5, SH = 330 / N;
+// two stacks of slices: red plate under, paper on top
+const mkStack = cls => Array.from({ length: N }, (_, i) => { const s = K.el(word, 'slice ' + cls, { top: i * SH + 'px', height: SH + 'px' });
+  K.el(s, 'w disp', { top: -i * SH + 'px' }, IN.word); return s; });
+const plate = mkStack('plate'), main = mkStack('main');
+tl.set(plate, { opacity: 0 }, 0);
+const r = K.rng(9);
+function glitch(t, amp, red) {      // slices shear apart on the beat, plate shows through, then snap home
+  main.forEach((s, i) => { const dx = (i % 2 ? -1 : 1) * amp * (.4 + r() * .8);
+    tl.to(s, { x: dx, duration: .05, ease: 'none' }, t); tl.to(s, { x: dx * -.3, duration: .06, ease: 'none' }, t + .1); tl.to(s, { x: 0, duration: .14, ease: 'back.out(3)' }, t + .16); });
+  if (red) { tl.to(plate, { opacity: 1, x: 18, y: -6, duration: .04 }, t); tl.to(plate, { x: -12, y: 4, duration: .06 }, t + .1); tl.to(plate, { opacity: 0, x: 0, y: 0, duration: .12 }, t + .2); }
+}
+// tapes slide in from both sides, stripes keep crawling
+tl.fromTo('#t1', { xPercent: -110 }, { xPercent: 0, duration: .4, ease: 'power3.out' }, 0);
+tl.fromTo('#t2', { xPercent: 110 }, { xPercent: 0, duration: .4, ease: 'power3.out' }, .08);
+K.every(t => { const o = (t * 160).toFixed(1); $('t1').style.backgroundPosition = `${o}px 0`; $('t2').style.backgroundPosition = `${-o}px 0`; }, 0, 4.6);
+// the slam
+tl.fromTo(word, { scale: 1.7, opacity: 0, filter: 'blur(14px)' }, { scale: 1, opacity: 1, filter: 'blur(0px)', duration: .26, ease: 'expo.in' }, .35);
+tl.fromTo('#flash', { opacity: .55 }, { opacity: 0, duration: .3, ease: 'power2.out', immediateRender: false }, .61);
+K.shake(root.querySelector('.ground'), .61, 10, 4); K.shake('#t1', .61, 8, 4); K.shake('#t2', .62, 8, 4);
+glitch(.85, 110, true);
+tl.to(main.map(s => s.firstChild), { color: C.alarm, duration: .05 }, 1.3); tl.to(plate.map(s => s.firstChild), { color: C.paper, duration: .05 }, 1.3);
+glitch(1.3, 70, true);
+tl.fromTo('#bar', { scaleX: 0 }, { scaleX: 1, duration: .45, ease: 'expo.out' }, 1.55);
+tl.fromTo('#scan', { top: -140 }, { top: 980, duration: .9, ease: 'power1.inOut' }, 1.9);
+glitch(2.4, 50, false);
+tl.to('#bar', { scaleX: .2, duration: .12, ease: 'power2.in' }, 2.45); tl.to('#bar', { scaleX: 1, duration: .4, ease: 'back.out(2)' }, 2.57);
+glitch(2.95, 130, true);
+[3.45, 3.52, 3.6].forEach((t, k) => tl.to(word, { opacity: k % 2 ? 1 : .25, duration: .02 }, t)); tl.to(word, { opacity: 1, duration: .02 }, 3.66);
+tl.fromTo('#scan', { top: -140 }, { top: 980, duration: .7, ease: 'power1.inOut', immediateRender: false }, 3.5);
+// exit: slices fly out alternately
+main.concat(plate).forEach((s, i) => tl.to(s, { x: (i % 2 ? -1 : 1) * 1200, duration: .32, ease: 'power3.in' }, 4.18 + (i % N) * .02));
+tl.to(['#t1', '#t2', '#bar'], { opacity: 0, duration: .3, ease: 'power2.in' }, 4.2);
+K.finish();
+})();
+</script></body></html>
