@@ -1,0 +1,1 @@
+{"name": "shorts-review-app", "private": true, "type": "module", "engines": {"node": ">=20"}, "dependencies": {"ffmpeg-static": "5.2.0"}}
