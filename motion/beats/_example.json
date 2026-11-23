@@ -1,0 +1,9 @@
+{
+ "clip": "ep-0101/clips/s1",
+ "out": "ep-0101/v1",
+ "name": "s1",
+ "opener": {"style": "seam", "title": "One clear line<br><mark>a stranger gets</mark>", "hold": [12, 0.05], "top": "r1", "title_y": 850},
+ "end": [80, 0.25],
+ "segments": [[13, "full"], [20, "split", "r1"], [38, "full"]],
+ "runs": {"r1": {"js": "r1.js", "assets": []}}
+}

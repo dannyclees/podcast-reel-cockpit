@@ -1,0 +1,64 @@
+{
+  "_note": "Single source of truth. setup/build_brand.py reads brand/brand.json (this shape) and generates every CSS, JS, texture and sound file. Never hard-code a colour, font, name, handle or URL anywhere else.",
+  "show": {
+    "name": "Example Show",
+    "short": "Example",
+    "handle": "exampleshow",
+    "site": "https://example.com",
+    "tagline": "",
+    "audience": "who watches, in one plain line",
+    "topics": ["topic the show covers"],
+    "saturated_topic": "the topic your niche is drowning in; at most one Short per episode on it (R3)",
+    "voice": ["plain words that describe how the show talks"],
+    "banned_words": []
+  },
+  "format": "two-host",
+  "people": [
+    {"id": "a", "name": "Host One", "tag": "#HostOne", "role": "host", "riverside_track": "Host One"},
+    {"id": "b", "name": "Host Two", "tag": "#HostTwo", "role": "host", "riverside_track": "Host Two"}
+  ],
+  "recording": {"source": "local", "screen_share": true},
+  "colors": {
+    "ground": "#0E0E10", "on_ground": "#FFFFFF",
+    "paper": "#F4F2EC", "on_paper": "#111111",
+    "panel": "#17171A", "on_panel": "#FFFFFF",
+    "accent": "#3DDC97", "on_accent": "#0B0B0C", "accent_deep": "#1E8F60",
+    "alarm": "#E5484D", "mute": "#8A8A8A",
+    "cap_box": "rgba(14,14,16,.86)", "cap_text": "#FFFFFF", "cap_spoken": "#3DDC97"
+  },
+  "app_colors": {
+    "bg": "#F2F2EE", "bg_2": "#E8E8E2", "surface": "#FFFFFF", "line": "#E2E2DA", "line_2": "#D2D2C8",
+    "ink": "#111111", "ink_2": "#333333", "mute": "#7D7D75",
+    "accent": "#3DDC97", "accent_soft": "#DFF8EC", "accent_ink": "#14613F"
+  },
+  "fonts": {
+    "display": {"family": "Example Display", "source": "google", "weight": 400},
+    "body": {"family": "Example Sans", "source": "google", "heavy": 800, "bold": 700},
+    "mono": {"family": "Example Mono", "source": "google", "weight": 400},
+    "app_body": "Example Sans"
+  },
+  "logo": {"file": "brand/logo.png", "wordmark_text": "EXAMPLE SHOW"},
+  "texture": {"style": "grain", "seed": 1, "strength": 0.5, "user_image": null},
+  "influence": {"links": [], "notes": "what was taken from the references, in plain words"},
+  "motion": {"signature": "stack", "energy": "medium"},
+  "title": {"uppercase": true, "highlight": "block"},
+  "caption": {"radius": 28, "uppercase": false},
+  "end_card": {"cta": "FULL EPISODE OUT NOW", "platforms": ["apple", "spotify", "youtube"], "click": "brand/sfx/end_click.wav"},
+  "music": [],
+  "grade": {"lut": null, "lut_strength": 0.6},
+  "posting": {
+    "platforms": ["youtube", "instagram", "tiktok"],
+    "timezone": "UTC",
+    "gap_hours": 4,
+    "clash_hours": 1,
+    "always_tags": ["#HostOne", "#HostTwo"],
+    "cta_line": "Watch the full episode:",
+    "youtube_channel_id": "",
+    "instagram_username": "",
+    "tiktok_username": ""
+  },
+  "app": {"title": "Example Show Shorts System", "approver": "Host One", "bucket": "shorts-media", "url": ""},
+  "framecheck_ignore": [],
+  "versions_per_short": 1,
+  "shorts_per_episode": 5
+}
